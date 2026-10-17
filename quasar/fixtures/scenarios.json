@@ -1,0 +1,5 @@
+[
+  {"id":"baseline","label":"Exercise hour 0","valid_from":"2026-10-17T12:00:00Z","valid_to":"2026-10-17T18:00:00Z","rainfall_6h_mm":15,"gauge_margin_m":1.2},
+  {"id":"heavy-rain","label":"Exercise hour 6","valid_from":"2026-10-17T18:00:00Z","valid_to":"2026-10-18T00:00:00Z","rainfall_6h_mm":70,"gauge_margin_m":0.4},
+  {"id":"peak","label":"Exercise hour 12","valid_from":"2026-10-18T00:00:00Z","valid_to":"2026-10-18T06:00:00Z","rainfall_6h_mm":115,"gauge_margin_m":-0.2}
+]

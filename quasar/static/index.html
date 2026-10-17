@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quasar | Miami-Dade flood intelligence</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header><div><a class="brand" href="/">QUASAR <span>/ Miami-Dade</span></a><p>Flood risk intelligence · IBM Z Datathon</p></div><span class="badge">SYNTHETIC DEMO</span></header>
+  <main>
+    <section class="intro"><p class="eyebrow">ONE COUNTY. A CLEARER PICTURE.</p><h1>See how exposure changes.</h1><p>Explore fictional sites across a rainfall exercise. Select a site to see what contributes to its relative score.</p></section>
+    <aside class="notice">Unvalidated demonstration estimates. These are not flood depths, probabilities, or official warnings. All sites and attributes are synthetic.</aside>
+    <section class="toolbar" aria-label="Exercise controls"><label for="scenario">Exercise time window <select id="scenario" disabled></select></label><p id="window"></p></section>
+    <p id="error" role="alert" hidden></p>
+    <section class="stats" aria-label="Scenario summary"><div><strong id="site-count">—</strong><span>Exercise sites</span></div><div><strong id="elevated-count">—</strong><span>Elevated relative score</span></div><div><strong id="unknown-count">—</strong><span>Insufficient data</span></div></section>
+    <div class="workspace"><section aria-label="Miami-Dade exercise map"><div id="map"><p class="map-fallback">Map loading. The site list below works without the map.</p></div><p class="legend"><span class="dot elevated"></span> Elevated <span class="dot moderate"></span> Moderate <span class="dot lower_relative"></span> Lower relative <span class="dot unknown"></span> Unknown</p></section><section class="details" aria-labelledby="detail-heading"><p class="eyebrow">WHY THIS SCORE?</p><h2 id="detail-heading">Choose an exercise site</h2><div id="detail" aria-live="polite">Select a map point or a site from the list.</div></section></div>
+    <section class="sites"><h2>Prioritized exercise sites</h2><p>Fictional points, not a parcel inventory. Lower relative scores do not mean safe conditions.</p><div class="table-wrap"><table><thead><tr><th>Exercise site</th><th>Relative score / 100</th><th>Band</th><th>Details</th></tr></thead><tbody id="sites"></tbody></table></div></section>
+    <section class="official"><h2>Official NWS alerts</h2><p id="official-status">Official feed is not connected. This is not an all-clear.</p><a href="https://www.weather.gov/mfl/" target="_blank" rel="noopener noreferrer">Open the official NWS Miami forecast office ↗</a></section>
+  </main><footer>Miami-Dade County only · Synthetic exercise, not a historical storm replay · No notifications are sent</footer>
+</body>
+</html>

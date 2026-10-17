@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quasar-flood"
+version = "0.1.0"
+description = "Miami-Dade flood risk intelligence datathon starter"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+quasar = "quasar.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["quasar*"]
+
+[tool.setuptools.package-data]
+quasar = ["fixtures/*.json", "static/*"]
