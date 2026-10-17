@@ -10,14 +10,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from .config import COUNTY_FIPS, COUNTY_NAME, NOTICE, TIMEZONE, require_county
+from .config import COUNTY_FIPS, COUNTY_NAME, NOTICE, TIMEZONE, map_settings, require_county
+from .adapters.weathernext import load_forecast
 from .notifications import preview
 from .pipeline import collection, scenarios
 
 STATIC = Path(__file__).parent / "static"
 ASSETS = {"/": ("index.html", "text/html; charset=utf-8"),
           "/app.js": ("app.js", "text/javascript; charset=utf-8"),
-          "/style.css": ("style.css", "text/css; charset=utf-8")}
+          "/style.css": ("style.css", "text/css; charset=utf-8"),
+          "/spatial.js": ("spatial.js", "text/javascript; charset=utf-8"),
+          "/vendor/h3-js.umd.js": ("vendor/h3-js.umd.js", "text/javascript; charset=utf-8")}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -47,7 +50,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, {"status": "ok", "mode": "synthetic_demo", "county_fips": COUNTY_FIPS})
             if url.path == "/api/config":
                 return self.send(200, {"county_fips": COUNTY_FIPS, "county_name": COUNTY_NAME,
-                                       "timezone": TIMEZONE, "notice": NOTICE, "mode": "synthetic_demo"})
+                                       "timezone": TIMEZONE, "notice": NOTICE, "mode": "synthetic_demo",
+                                       "map": map_settings()})
+            if url.path == "/api/weather/status":
+                forecast = load_forecast()
+                return self.send(200, {k: v for k, v in forecast.items() if k != "records"})
             if url.path == "/api/scenarios":
                 return self.send(200, {"scenarios": scenarios(), "historical_replay": False})
             if url.path == "/api/properties":

@@ -6,17 +6,23 @@ Synthetic JSON adapters
     -> property/weather feature contract
     -> illustrative score + factor contributions + unknown state
     -> GeoJSON API
-    -> map / prioritized list / simulated notification preview
+    -> Mapbox / H3 occupied-site summaries / list / simulated notification preview
+
+Locally authenticated BigQuery CLI (explicit, dry-run by default)
+    -> WeatherNext 3 native-cell point join, one run and six hourly steps
+    -> validated local JSON snapshot
+    -> freshness + completeness checks
+    -> real rainfall + fictional property/gauge inputs (MIXED DEMO)
 
 Optional NWS point client -> timestamped official feed response (CLI only)
 
-Planned: county GIS / FEMA / USGS / optional WeatherNext / historical archive
+Planned: county GIS / FEMA / USGS / historical archive
     -> spatial joins + provenance + freshness -> validated model + replay
 ```
 
 One Python process serves the API and static frontend. There is no database, worker, scheduler or external message delivery. This keeps the starter easy to run on each teammate's computer and on IBM Z. A later public service needs an application hosting stack, authentication, persistence, rate limits and operational monitoring.
 
-The API always uses synthetic fixtures. The NWS adapter is intentionally separate: live alerts must not appear to validate a synthetic property score. Call it explicitly to inspect official alerts for one fixture coordinate:
+The default API mode uses synthetic fixtures. A separate WeatherNext scenario uses imported rainfall with fictional property/gauge inputs and is explicitly labeled `mixed_forecast_demo`. No dashboard request queries Google Cloud. Notification previews are limited to fully synthetic scenarios. The NWS adapter is intentionally separate: live alerts must not appear to validate a synthetic property score. Call it explicitly to inspect official alerts for one fixture coordinate:
 
 ```sh
 python3 -m quasar.adapters.nws --property-id demo-001 --user-agent 'Quasar-datathon/0.1 (YOUR_CONTACT)'
@@ -38,7 +44,17 @@ Clamp each normalized feature to 0-1, multiply by its weight and 100, and sum. C
 
 These weights, limits and bands are arbitrary demonstration parameters. FEMA X variants are simplified and need proper subtype handling. Low absolute elevation alone is not a flood model. Gauge-to-property linkage, terrain connectivity, drainage/canals, coastal tides, surge, soils and antecedent conditions are not modeled. All fixture gauges and attributes are invented. A gauge flood-stage margin is meaningful only with a defensible gauge linkage and compatible vertical datum. Do not use this score for operational decisions.
 
-For real data, maintain observed time, forecast issue/valid times, data age and source references at feature level. Establish staleness thresholds per source before scoring. The fixed synthetic exercise clock does not implement live freshness validation.
+For real data, maintain observed time, forecast issue/valid times, data age and source references at feature level. The WeatherNext integration enforces initialization age <=12 hours, import age <=2 hours, and a window that has not ended. These are conservative starter policies, not a meteorologically validated operational policy. Incomplete six-hour windows and stale imports produce null rainfall and unknown scores. The fixed synthetic exercise clock has no live-weather meaning.
+
+## Mapbox and H3
+
+Mapbox GL JS 3.33.0 renders the site GeoJSON as a circle layer and H3 cells as fill/outline layers. A runtime configuration endpoint returns only the public Mapbox token and style. The table remains usable when credentials, WebGL, SDK resources or map tiles are unavailable.
+
+H3 4.3.0 is bundled as browser JavaScript with its Apache license/notice. `spatial.js` indexes sites at resolution 7 and builds occupied-cell summaries: site count, scored count, unknown count, maximum and mean score. Unknowns are excluded from score statistics and reported separately. A fully unknown cell remains unknown. The map uses the maximum score for color so averaging does not hide a high-scoring demo site.
+
+Hexagon boundaries are not clipped to the county and may cross its border; only curated Miami-Dade sample sites are included. Hexagons are neither inundation areas nor countywide coverage. Their sizes do not increase WeatherNext's original 0.1-degree resolution. Forecast values are associated using the source polygon directly, before any H3 display aggregation. Real property terrain, footprints and waterway relations must retain their own geometry.
+
+See [integration setup](integrations.md) for authentication, query semantics, required project details and remaining live checks.
 
 ## IBM Z plan
 

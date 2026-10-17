@@ -6,6 +6,8 @@ from .pipeline import collection
 def preview(payload: dict) -> dict:
     if not isinstance(payload, dict):
         raise ValueError("Body must be an object")
+    if payload.get("scenario") == "weathernext":
+        raise ValueError("Notification previews support synthetic exercise scenarios only")
     if payload.get("opt_in") is not True:
         raise ValueError("Explicit opt_in=true is required for a simulated notification")
     channel = payload.get("channel", "email")

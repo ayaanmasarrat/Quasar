@@ -1,0 +1,10 @@
+{
+  "name": "quasar-browser-tools",
+  "private": true,
+  "scripts": {
+    "vendor": "node scripts/vendor-h3.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "check": "node --check quasar/static/app.js && node --check quasar/static/spatial.js"
+  },
+  "devDependencies": { "h3-js": "4.3.0" }
+}

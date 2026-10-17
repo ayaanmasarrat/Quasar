@@ -98,6 +98,26 @@ h2 {
   color:#eee1b6;
 }
 
+.weather-status {
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 16px;
+  margin-top:16px;
+  font-size:13px;
+}
+
+.weather-status p, #map-status {
+  color:var(--muted);
+  font-size:12px;
+  margin:6px 0;
+}
+
+.hex-control {
+  display:block;
+  font-size:12px;
+  margin-top:12px;
+}
+
 .toolbar {
   display:flex;
   justify-content:space-between;
@@ -322,11 +342,11 @@ footer {
   padding-bottom:32px;
 }
 
-.leaflet-popup-content {
+.mapboxgl-popup-content {
   color:#172632;
 }
 
-.leaflet-control-attribution a {
+.mapboxgl-ctrl-attrib a {
   color:#174a63;
 }
 

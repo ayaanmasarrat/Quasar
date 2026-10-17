@@ -7,3 +7,11 @@ data/raw/
 data/processed/
 coverage.xml
 .coverage
+node_modules/
+*.egg-info/
+build/
+dist/
+.env.*
+!.env.example
+*credentials*.json
+*service-account*.json

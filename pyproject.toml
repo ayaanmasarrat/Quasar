@@ -16,4 +16,4 @@ quasar = "quasar.__main__:main"
 include = ["quasar*"]
 
 [tool.setuptools.package-data]
-quasar = ["fixtures/*.json", "static/*"]
+quasar = ["fixtures/*.json", "static/*", "static/vendor/*"]
