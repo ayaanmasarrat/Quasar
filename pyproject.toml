@@ -9,6 +9,15 @@ description = "Miami-Dade flood risk intelligence datathon starter"
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+# Local research tooling only; the application and container do not install this.
+notebooks = [
+  "notebook==7.6.3",
+  "ipykernel==7.4.0",
+  "nbconvert==7.17.2",
+  "nbformat==5.11.1",
+]
+
 [project.scripts]
 quasar = "quasar.__main__:main"
 
@@ -16,4 +25,4 @@ quasar = "quasar.__main__:main"
 include = ["quasar*"]
 
 [tool.setuptools.package-data]
-quasar = ["fixtures/*.json", "static/*"]
+quasar = ["fixtures/*.json", "static/*", "static/vendor/*", "static/ui/*"]
