@@ -58,4 +58,6 @@ See [integration setup](integrations.md) for authentication, query semantics, re
 
 ## IBM Z plan
 
+Research can use `notebooks/01_shared_code_starter.ipynb`, while regular Python/editor users can run `python -m quasar.analysis --compare`. Both call `quasar.analysis`, which delegates scoring to the existing application pipeline. Notebook-specific dependencies live in the optional `.[notebooks]` extra and are not installed by the application or container. CI executes clean notebook sources in fresh kernels; no running notebook is needed by the service. See [notebook workflow](../notebooks/README.md).
+
 The Python core has no third-party runtime packages and the container has no processor-specific build instructions. This is a portability design choice, not certification. Run the tests and container on the actual Linux `s390x` host before claiming IBM Z compatibility. Add ML/GIS packages only after checking native wheels or a reproducible build on the team's target host.

@@ -15,3 +15,6 @@ dist/
 !.env.example
 *credentials*.json
 *service-account*.json
+.ipynb_checkpoints/
+notebooks/outputs/
+work/

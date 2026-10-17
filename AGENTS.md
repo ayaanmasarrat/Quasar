@@ -24,3 +24,6 @@
 - WeatherNext BigQuery access is confirmed. Keep actual connection status separate from that entitlement; do not claim a live test without one. Cloud queries are explicit importer commands, dry-run by default, with a byte cap.
 - H3 resolution-7 cells summarize occupied sites. They do not replace county geometry, native WeatherNext cells or property-level terrain; never claim H3 increases forecast resolution.
 - Preserve source initialization, validity, import time, native resolution and rainfall units. Missing, duplicate, null or stale hourly inputs must not become zero rainfall.
+- Support both notebook research and regular app/editor development. Jupyter is optional via `.[notebooks]`; do not add it to the app runtime or container.
+- Keep reusable analysis, transformations, adapters and model logic in `quasar/` with tests. Notebooks import those functions; they may contain presentation and experiment-specific orchestration, but no second scoring implementation.
+- Assign a notebook owner per experiment. Commit clean `.ipynb` source without cell outputs or execution counts. Use `python scripts/check_notebooks.py --clear` and, in the optional environment, `python scripts/check_notebooks.py --execute` before proposing notebook changes. Never turn on automatic cloud queries in the starter.

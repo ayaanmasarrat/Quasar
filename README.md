@@ -77,10 +77,20 @@ Other county FIPS values are rejected. `scenario` accepts `baseline`, `heavy-rai
 
 ## Team work areas
 
+The repository supports both regular Python development and optional Jupyter Notebook research. The teammate using notebooks can start with [the shared-code starter](notebooks/01_shared_code_starter.ipynb) and [notebook setup](notebooks/README.md). Everyone else can run the app and the same analysis without installing Jupyter:
+
+```sh
+python3 -m quasar.analysis --scenario peak
+python3 -m quasar.analysis --compare
+```
+
+Reusable analysis lives in `quasar/analysis.py`; it calls the existing application pipeline rather than duplicating scoring. The optional `.[notebooks]` dependency extra stays out of the application runtime/container. GitHub checks that source notebooks have clean outputs and execute from a fresh kernel.
+
 | Area | Start here | First useful contribution |
 | --- | --- | --- |
 | Data / GIS | `quasar/pipeline.py`, `docs/data-contract.md` | County boundary, parcels and building joins; provenance |
 | Modeling / AI | `quasar/scoring.py` | Validated features, baseline evaluation, then trained model |
+| Notebook research | `notebooks/01_shared_code_starter.ipynb`, `quasar/analysis.py` | Explore and document; promote reusable work into shared Python functions |
 | Frontend | `quasar/static/` | Mapbox layers, H3 summaries, real parcel polygons |
 | Integration / IBM Z | `quasar/server.py`, `Dockerfile` | Server smoke test, environment setup, reproducible replay |
 
