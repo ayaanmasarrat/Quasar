@@ -56,3 +56,96 @@ Hourly timestamps denote the end of each accumulation interval. The six timestam
 ## Contract for future real adapters
 
 Do not silently replace fixtures. Add an explicit data mode and source status. Every real adapter must retain source URL/record ID, retrieval time, observation/issue/valid times where relevant, CRS, vertical datum, units, license and transformation steps. Add authoritative county geometry validation, source-age limits, missing/stale states, and tests for outside-county records. Store only normalized county-filtered features in the scoring pipeline. Do not turn a centroid association into a claim of building-level inundation.
+
+## Isaias 2026 hourly replay (additive contract)
+
+Scenario `isaias-2026` spans 2026-10-09T04:00:00Z through
+2026-10-10T04:00:00Z inclusive (25 whole-hour departure times). `at` selects
+the departure time; `preset` is `archived`, `plus-5`, or `plus-10`; `mode` is
+`archive` or `what_if`. Non-archived presets and road/destination overrides
+require what-if mode. UTC is canonical; display timezone is America/New_York.
+Each score uses rainfall intervals ending at at+1h through at+6h from the
+latest eligible initialization (not newer than the replay time, at most 12h old).
+If supplied, published_at must also be no later than at. Missing publication
+times are explicitly initialization-based reconstructions, not as-issued proof.
+Archived imports retain real retrieval time, but freshness is evaluated against
+the replay clock, never today's date. Current WeatherNext v1 freshness is unchanged.
+
+`GET /api/scenarios` adds replay metadata and source status. Existing scenarios
+remain unchanged. `GET /api/properties?scenario=isaias-2026&at=...&preset=archived&mode=archive`
+returns the existing scored GeoJSON with `replay` metadata, factor-level
+provenance and a six-hour forward validity window. Static site and gauge inputs
+remain fictional; incomplete/invalid forecast data is never zero-filled.
+
+`GET /api/timeline?site=demo-001&at=...&preset=archived&mode=archive` returns all
+25 hourly risk objects, their rainfall provenance and nullable change from the
+preceding score. Nulls are chart gaps. `POST /api/routes` accepts a JSON object
+with `site`, `at`, `preset`, `mode`, and optional `roads` / `destinations` maps.
+Road states: `open`, `closed`, `unknown`; destination values: booleans. Overrides
+are restricted to known IDs (max 100 road and 3 destination overrides; 16KB body).
+The equivalent GET endpoint supports selection without overrides. Both return
+county, mode, preset, at, source provenance, graph layers, selected route and
+unrestricted comparison; statuses distinguish unavailable data from no route.
+
+Historical WeatherNext files use schema_version 2 and kind `historical_forecasts`,
+with county/model/grid/statistic/units/table/retrieval metadata and `runs`.
+Each run contains init_time, optional published_at, and hourly rows with
+property_id, forecast_time, rainfall_1h_mm, native_cell_wkt. All rows must be
+curated points, finite nonnegative mm or null, and strictly after initialization.
+Duplicates invalidate that run, producing unknown rainfall rather than falling
+back to an older run. Source files, checksums and import commands remain local.
+
+Road graph geometry is county-contained EPSG:4326, sourced from Miami-Dade street
+centerlines. Topology, two-way traversal, 30km/h speeds, access connectors,
+restrictions and all three destinations are exercise assumptions, not navigation
+or shelter-opening evidence. Whole segments are checked against county rings,
+including holes and concavities. No H3 or property score determines passability.
+
+## Reports and BI exports (additive contract)
+
+`GET /api/reports?scenario=baseline|heavy-rain|peak|weathernext` returns the shared
+analysis report with `generated_at`, scenario, summary, provenance, forecast
+metadata and `rows`. Each row includes coordinates, site/scenario keys, relative
+score, band, missing input names and available factor contributions. It also
+repeats county, mode, input status, window validity, model version, generation
+and forecast initialization/import times, source table, statistic and native
+resolution. Rainfall is mm per six hours; coordinates are EPSG:4326. The original
+property API and scoring are unchanged. Unknown scores have no factor rows.
+
+`scenario=compare` returns only the three synthetic windows, a `scenarios` array
+of scenario/summary pairs, and 18 rows (six fictional sites per window). It has
+no single scenario/summary. All rows share one generation timestamp. The Python
+`compare_scenarios()` helper continues returning a list for notebook callers.
+
+`GET /api/exports?scenario=...&format=csv|geojson|zip` defaults to baseline CSV.
+Responses use attachment filenames `quasar-SCENARIO.EXT`, `Cache-Control: no-store`
+and the matching CSV, GeoJSON or ZIP MIME type. Invalid county, scenario and
+format return JSON errors, not successful attachments. The exports invoke only
+local shared analysis; they never query BigQuery, load notebook code or expose
+configuration credentials. A missing/invalid WeatherNext snapshot is an error;
+a structurally valid stale/incomplete snapshot retains unknown rainfall/scores.
+
+CSV has one row per `(property_id, scenario)`. Numeric nulls are empty cells;
+`missing` is semicolon-separated. Text uses CSV quoting and potentially executable
+spreadsheet text is prefixed with an apostrophe; negative numeric coordinates
+remain numeric. GeoJSON has the same flat fields with JSON nulls and a missing
+array. Feature IDs are `property_id:scenario`, so compare features remain unique.
+Compare maps repeat point coordinates; filter scenario before mapping.
+
+ZIP includes `sites.csv`, `factors.csv`, `sites.geojson`, `metadata.json` and
+`README.txt`. Factors relate on BOTH property_id and scenario, with one row per
+available scoring factor. An inner join drops unknown sites, and a flattened
+factor join repeats site counts: prefer a relationship or left join with distinct
+site/window counts. Metadata lists columns and meanings, units, CRS, timezones,
+source terms, transformation notes, scenario summaries and forecast provenance.
+All bundle files derive from the same report snapshot. Keep nulls distinct from
+zero; score averages exclude unknown sites and an all-unknown average is null.
+
+App reports default to baseline and provide scenario overview, synthetic-window
+comparison, and site explanation. Site selection affects only the explanation;
+downloads contain all sites in the selected window or comparison. Every report
+and export carries synthetic/mixed status and limitations. Printable reports
+retain charts, tables, validity/generation/source timestamps and official-guidance
+notes; they link to the interactive map rather than capturing a basemap. Print
+uses the browser's Print / Save as PDF. BI tools refresh by manual file replacement;
+no hosted embedding, automated refresh or native workbook generation is included.
