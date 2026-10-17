@@ -3,10 +3,14 @@
 import {
   ChevronRight,
   ChevronsUpDown,
+  HelpCircle,
   Map,
   MapPin,
-  FileChartColumn,
+  CloudRain,
   Database,
+  FileChartColumn,
+  ShieldCheck,
+  Waves,
 } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -111,11 +115,19 @@ const sidebarData: SidebarData = {
       { label: "Map overview", icon: Map, href: "#map-overview" },
       { label: "Exercise sites", icon: MapPin, href: "#exercise-sites" },
       { label: "Data", icon: Database, href: "#data" },
+      { label: "Forecast & sources", icon: CloudRain, href: "#data-sources" },
       { label: "Reports & exports", icon: FileChartColumn, href: "#reports" },
+    ] },
+    { title: "Resources", items: [
+      { label: "Exercise guide", icon: HelpCircle, href: "#exercise-guide", children: [
+        { label: "Reading the map", icon: Map, href: "#exercise-guide" },
+        { label: "Understanding a score", icon: Waves, href: "#site-details" },
+      ] },
+      { label: "Official NWS guidance", icon: ShieldCheck, href: "https://www.weather.gov/mob/" },
     ] },
   ],
   footerGroup: { title: "Support", items: [] },
-  user: { name: "Miami-Dade County", email: "Datathon exercise", avatar: quasarLogo },
+  user: { name: "Okaloosa County", email: "Datathon exercise", avatar: quasarLogo },
 };
 
 const SidebarLogo = ({ logo }: { logo: SidebarData["logo"] }) => {
@@ -158,11 +170,11 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
       <SidebarMenuItem>
         <SidebarMenuButton
           asChild
-          isActive={active === item.href}
+          isActive={active === item.href || (item.href === "#map-overview" && active === "#isaias-replay")}
           tooltip={item.label}
         >
           <a href={item.href} onClick={() => setOpenMobile(false)}
-            aria-current={active === item.href ? "page" : undefined}
+            aria-current={active === item.href || (item.href === "#map-overview" && active === "#isaias-replay") ? "page" : undefined}
             {...(item.href.startsWith("https:") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
             <Icon className="size-4" />
             <span>{item.label}</span>
@@ -176,7 +188,7 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
     <Collapsible asChild defaultOpen className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton isActive={active === item.href} tooltip={item.label}>
+          <SidebarMenuButton isActive={active === item.href || (item.href === "#map-overview" && active === "#isaias-replay")} tooltip={item.label}>
             <Icon className="size-4" />
             <span>{item.label}</span>
             <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -254,6 +266,14 @@ const NavUser = ({ user }: { user: UserData }) => {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <a href="#data"><Database className="mr-2 size-4" />Data</a>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <a href="#data-sources"><CloudRain className="mr-2 size-4" />Forecast & sources</a>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <a href="https://www.weather.gov/mob/" target="_blank" rel="noopener noreferrer"><ShieldCheck className="mr-2 size-4" />Official NWS guidance</a>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

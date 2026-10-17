@@ -29,7 +29,7 @@ const labels: Record<string, string> = {
 const colors: Record<string, string> = { lower_relative: "#347e73", moderate: "#a87812", elevated: "#b64d36", unknown: "#747c89" };
 const inputs = ["rainfall_6h_mm", "elevation_m", "fema_zone", "waterway_distance_m", "gauge_margin_m"];
 const number = (value: number | null) => value === null ? "Unknown" : value.toLocaleString("en-US", { maximumFractionDigits: 2 });
-const time = (value: string) => new Date(value).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" }) + " Miami time";
+const time = (value: string) => new Date(value).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "medium", timeStyle: "short" }) + " Central time";
 
 async function get<T,>(url: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(url, { signal, cache: "no-store" });
@@ -113,7 +113,7 @@ export function DataDashboard({ active }: { active: boolean }) {
   return <section className="data-page w-full flex-1 space-y-4 overflow-auto bg-background p-3 sm:space-y-6 sm:p-4 md:p-6" id="data" hidden={!active} aria-labelledby="data-heading" aria-busy={loading}>
     <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-1">
-        <p className="text-xs text-muted-foreground">Miami-Dade County · FIPS 12086</p>
+        <p className="text-xs text-muted-foreground">Okaloosa County · FIPS 12091</p>
         <h1 id="data-heading" className="text-2xl font-semibold tracking-tight">Data</h1>
         <p className="text-sm text-muted-foreground">The inputs, patterns, and gaps behind this exercise.</p>
       </div>
@@ -188,6 +188,6 @@ export function DataDashboard({ active }: { active: boolean }) {
       </div>
       <p className="text-xs text-muted-foreground">Rechecking reads the configured local snapshot. It does not query BigQuery. Stale or incomplete rainfall remains unknown. Official feed failures never mean no active alerts.</p>
     </section>
-    <footer className="space-y-2 border-t pt-4 text-xs text-muted-foreground">{data && <p>{data.provenance}</p>}<p>Unvalidated estimates supplement official guidance. Follow <a className="underline underline-offset-4" href="https://www.weather.gov/mfl/" target="_blank" rel="noopener noreferrer">NWS Miami and local emergency guidance</a>. No notifications are sent.</p></footer>
+    <footer className="space-y-2 border-t pt-4 text-xs text-muted-foreground">{data && <p>{data.provenance}</p>}<p>Unvalidated estimates supplement official guidance. Follow <a className="underline underline-offset-4" href="https://www.weather.gov/mob/" target="_blank" rel="noopener noreferrer">NWS Mobile/Pensacola and local emergency guidance</a>. No notifications are sent.</p></footer>
   </section>;
 }

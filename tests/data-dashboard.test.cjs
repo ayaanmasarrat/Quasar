@@ -105,7 +105,7 @@ test('search and band filters affect only the table; CSV keeps the selected wind
   assert.match(html, /5 scored · 1 unknown/);
   assert.match(html, /scenario=baseline&amp;format=csv/);
   const siteRows = () => app.find(node => node.props?.id === 'data-explorer')[0];
-  assert.doesNotMatch(renderToStaticMarkup(siteRows()), /Biscayne exercise site/);
+  assert.doesNotMatch(renderToStaticMarkup(siteRows()), /Destin exercise site/);
   app.find(node => typeof node.props?.onValueChange === 'function')[1].props.onValueChange('elevated');
   html = app.render();
   assert.match(html, /No sites match these filters/);
@@ -179,7 +179,7 @@ test('a valid zero rainfall value renders as zero rather than unknown', async ()
   const zero = {...reports.baseline, rows: reports.baseline.rows.map(row => ({...row, rainfall_6h_mm: 0}))};
   const app = mount({reply: url => url.includes('/api/reports?') ? zero : undefined});
   app.render(); const html = await app.settle();
-  assert.match(html, /Six-hour rainfall in millimeters\. Biscayne: 0/);
+  assert.match(html, /Six-hour rainfall in millimeters\. Destin: 0/);
   const chart = app.find(node => node.type?.name === 'ChartGroup6')[0];
   assert.ok(chart.props.rainfall.every(row => row.value === 0));
 });
