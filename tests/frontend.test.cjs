@@ -13,7 +13,7 @@ class Element {
   setAttribute(name,value) { this[name]=value; }
 }
 
-async function boot({configured=false, mixed=false, scenarioFailure=false}={}) {
+async function boot({configured=false, mixed=false, scenarioFailure=false, mounted=true}={}) {
   const ids = new Map();
   const get = (id) => { if (!ids.has(id)) ids.set(id,new Element(id==="scenario" ? "select" : "div")); return ids.get(id); };
   const data = {type:"FeatureCollection", mode:mixed ? "mixed_forecast_demo" : "synthetic_demo", notice:"demo notice",
@@ -22,9 +22,11 @@ async function boot({configured=false, mixed=false, scenarioFailure=false}={}) {
     features:[{type:"Feature",id:"demo-001",geometry:{type:"Point",coordinates:[-80.185,25.85]},
       properties:{id:"demo-001",label:"Fictional site",risk:{score:72,band:"elevated",factors:[],missing:[]},
         ...(mixed ? {forecast:{status:"ready",available_hours:6,rainfall_6h_mm:15}} : {})}}]};
-  let map;
+  let map, resizeCallback, resizeCount=0, observed;
+  const events=[];
   class FakeMap {
     constructor() { map=this; this.sources={}; this.layers={}; this.handlers={}; }
+    resize() { resizeCount++; }
     addControl() {}
     on(name,...rest) { this.handlers[`${name}:${rest.length===1 ? "" : rest[0]}`]=rest.at(-1); }
     addSource(id,source) { this.sources[id]={data:source.data,setData(data){this.data=data;}}; }
@@ -33,8 +35,12 @@ async function boot({configured=false, mixed=false, scenarioFailure=false}={}) {
     setLayoutProperty(id,key,value) { this.layers[id][key]=value; }
   }
   const mapboxgl = {Map:FakeMap,NavigationControl:class {}};
-  const context = {console,document:{getElementById:get,createElement:(tag)=>new Element(tag),createTextNode:(text)=>({textContent:text})},
-    window:{h3,QuasarSpatial,mapboxgl},h3,QuasarSpatial,mapboxgl,
+  const context = {console,document:{getElementById:(id)=>mounted ? get(id) : null,dispatchEvent:(event)=>events.push(event.type),createElement:(tag)=>new Element(tag),createTextNode:(text)=>({textContent:text})},
+    Event:class { constructor(type) { this.type=type; } },
+    window:{h3,QuasarSpatial,mapboxgl, ResizeObserver:class {
+      constructor(callback) { resizeCallback=callback; }
+      observe(element) { observed=element; }
+    }},h3,QuasarSpatial,mapboxgl,
     fetch:async (url) => {
       if (scenarioFailure && url.includes("scenario=bad")) return {ok:false,json:async()=>({error:"bad scenario"})};
       const body = url==="/api/config" ? {map:{configured,public_token:"pk.test",style:"mapbox://styles/mapbox/dark-v11"}} :
@@ -44,7 +50,13 @@ async function boot({configured=false, mixed=false, scenarioFailure=false}={}) {
       return {ok:true,json:async()=>body};
     }};
   await vm.runInNewContext(fs.readFileSync("quasar/static/app.js","utf8"),context);
-  return {get,map,data};
+  return {get,map,data,events,
+    mount:async()=>{mounted=true; await context.window.Quasar.start();},
+    start:()=>context.window.Quasar.start(),
+    resize:()=>resizeCallback(),
+    get resizeCount(){return resizeCount;},
+    get observed(){return observed;},
+  };
 }
 
 test("without a Mapbox token the table, details and synthetic notification controls still work", async () => {
@@ -80,4 +92,26 @@ test("failed scenario fetch restores selector to the displayed scenario", async 
   await get("scenario").onchange();
   assert.equal(get("scenario").value,"baseline");
   assert.match(get("error").textContent,/bad scenario/);
+});
+
+
+test("React shell can mount before starting the controller, and repeated starts do not duplicate sites", async () => {
+  const app = await boot({mounted:false});
+  assert.deepEqual(app.events,["quasar:ready"]);
+  assert.equal(app.get("sites").children.length,0);
+  await app.mount();
+  assert.equal(app.get("sites").children.length,1);
+  assert.equal(app.get("detail-heading").textContent,"Fictional site");
+  await app.start();
+  assert.equal(app.get("scenario").children.length,1);
+  assert.equal(app.get("sites").children.length,1);
+});
+
+test("changing the shell content width resizes Mapbox without replacing its sources", async () => {
+  const app = await boot({configured:true});
+  app.map.handlers["load:"]();
+  assert.equal(app.observed,app.get("map"));
+  app.resize();
+  assert.equal(app.resizeCount,1);
+  assert.equal(app.map.sources.sites.data.features.length,1);
 });

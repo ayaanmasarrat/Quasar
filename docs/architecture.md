@@ -20,7 +20,7 @@ Planned: county GIS / FEMA / USGS / historical archive
     -> spatial joins + provenance + freshness -> validated model + replay
 ```
 
-One Python process serves the API and static frontend. There is no database, worker, scheduler or external message delivery. This keeps the starter easy to run on each teammate's computer and on IBM Z. A later public service needs an application hosting stack, authentication, persistence, rate limits and operational monitoring.
+One Python process serves the API and static frontend. The React/Tailwind application shell in `frontend/` wraps the existing map/data controller; Vite compiles it into committed `quasar/static/ui/` assets. The Python runtime serves only explicit asset routes, and its container needs no Node.js runtime. The Shadcnblocks key is used only by development tooling, never by the API or browser. There is no database, worker, scheduler or external message delivery. This keeps the starter easy to run on each teammate's computer and on IBM Z. A later public service needs an application hosting stack, authentication, persistence, rate limits and operational monitoring.
 
 The default API mode uses synthetic fixtures. A separate WeatherNext scenario uses imported rainfall with fictional property/gauge inputs and is explicitly labeled `mixed_forecast_demo`. No dashboard request queries Google Cloud. Notification previews are limited to fully synthetic scenarios. The NWS adapter is intentionally separate: live alerts must not appear to validate a synthetic property score. Call it explicitly to inspect official alerts for one fixture coordinate:
 

@@ -1,0 +1,76 @@
+@import "tailwindcss" source("./");
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --background: #ffffff;
+  --foreground: #20282b;
+  --card: #ffffff;
+  --card-foreground: #20282b;
+  --popover: #ffffff;
+  --popover-foreground: #20282b;
+  --primary: #166b62;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f5f4;
+  --secondary-foreground: #364744;
+  --muted: #f5f7f7;
+  --muted-foreground: #677571;
+  --accent: #edf3f1;
+  --accent-foreground: #1d5149;
+  --destructive: #b33e39;
+  --border: #e4e9e7;
+  --input: #dbe2df;
+  --ring: #3f8d80;
+  --radius: 0.65rem;
+  --sidebar: #f7f8fa;
+  --sidebar-foreground: #35413f;
+  --sidebar-primary: #166b62;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8efed;
+  --sidebar-accent-foreground: #16574e;
+  --sidebar-border: #e2e7e5;
+  --sidebar-ring: #3f8d80;
+}
+
+@theme inline {
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; margin: 0; }
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
+}

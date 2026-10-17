@@ -2,7 +2,7 @@
 const $ = (id) => document.getElementById(id);
 const colors = { elevated: "#ee9b82", moderate: "#e6c36e", lower_relative: "#82c6c1", unknown: "#a4a8bb" };
 const names = { rainfall_6h_mm: "Rainfall, six hours (mm)", elevation_m: "Terrain elevation (m)", fema_zone: "Illustrative FEMA zone", waterway_distance_m: "Waterway distance (m)", gauge_margin_m: "Margin below flood stage (m)" };
-let map, mapLoaded = false, selectedId, current, mapData, requestId = 0;
+let map, mapLoaded = false, selectedId, current, mapData, requestId = 0, started = false;
 const bandLabel = (band) => band.replaceAll("_", " ");
 
 async function api(url, options) {
@@ -115,6 +115,10 @@ function setupMap(settings) {
     map = new mapboxgl.Map({container:"map", accessToken:settings.public_token, style:settings.style,
       center:[-80.37,25.68], zoom:9, cooperativeGestures:true});
     map.addControl(new mapboxgl.NavigationControl(), "top-right");
+    // The shell animates its sidebar width without a window resize event.
+    if (window.ResizeObserver) {
+      new window.ResizeObserver(() => map.resize()).observe($("map"));
+    }
     map.on("error", () => { $("map-status").textContent = "Mapbox could not load a resource. Check your token, URL restrictions and network. The site list remains available."; });
     map.on("load", () => {
       const empty = {type:"FeatureCollection", features:[]};
@@ -175,6 +179,8 @@ async function loadScenario() {
 }
 
 async function start() {
+  if (started) return;
+  started = true;
   try { setupMap((await api("/api/config")).map); }
   catch { $("map-status").textContent = "Map configuration unavailable; the site list remains available."; }
   try { showWeatherStatus(await api("/api/weather/status")); }
@@ -192,4 +198,7 @@ async function start() {
   try { $("official-status").textContent = (await api("/api/official-alerts")).message; }
   catch { $("official-status").textContent = "Official feed status unavailable. This is not an all-clear."; }
 }
-start();
+// React mounts the existing map workspace before starting its data controller.
+window.Quasar = { start };
+if ($("scenario")) start();
+else document.dispatchEvent(new Event("quasar:ready"));

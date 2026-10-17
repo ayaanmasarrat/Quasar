@@ -44,7 +44,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(json.loads(body)["status"], "not_connected")
 
     def test_static_assets(self):
-        for path in ["/", "/app.js", "/style.css", "/spatial.js", "/vendor/h3-js.umd.js"]:
+        for path in ["/", "/app.js", "/style.css", "/ui/app-shell.js", "/ui/app-shell.css", "/spatial.js", "/vendor/h3-js.umd.js"]:
             with self.subTest(path=path):
                 status, body, _ = self.request(path)
                 self.assertEqual(status, 200)
@@ -53,7 +53,8 @@ class ApiTests(unittest.TestCase):
     def test_bad_scope_scenario_and_route(self):
         for path, expected in [("/api/properties?county_fips=12011",400),
                                ("/api/properties?scenario=invalid",400),
-                               ("/../README.md",404), ("/unknown",404)]:
+                               ("/../README.md",404), ("/.env",404), ("/components.json",404),
+                               ("/ui/../.env",404), ("/unknown",404)]:
             with self.subTest(path=path):
                 self.assertEqual(self.request(path)[0], expected)
 

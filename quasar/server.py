@@ -16,7 +16,9 @@ from .notifications import preview
 from .pipeline import collection, scenarios
 
 STATIC = Path(__file__).parent / "static"
-ASSETS = {"/": ("index.html", "text/html; charset=utf-8"),
+ASSETS = {"/ui/app-shell.js": ("ui/app-shell.js", "text/javascript; charset=utf-8"),
+          "/ui/app-shell.css": ("ui/app-shell.css", "text/css; charset=utf-8"),
+          "/": ("index.html", "text/html; charset=utf-8"),
           "/app.js": ("app.js", "text/javascript; charset=utf-8"),
           "/style.css": ("style.css", "text/css; charset=utf-8"),
           "/spatial.js": ("spatial.js", "text/javascript; charset=utf-8"),

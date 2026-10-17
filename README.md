@@ -29,6 +29,42 @@ npm run check
 npm test
 ```
 
+## Map workspace UI
+
+The map lives inside **Shadcnblocks Application Shell 2**, with an inset sidebar,
+icon collapse on desktop, and drawer navigation on mobile. Navigation links lead
+to the map, exercise sites, forecast/source status, and the exercise guide.
+Mapbox resizes when the sidebar width changes. Site inspection, H3 visibility,
+unknown data states, mixed forecast labels, and simulated notification previews
+use the existing controller and API.
+
+React/Tailwind source lives in `frontend/`. Vite builds the shell into
+`quasar/static/ui/`; those generated assets are committed so `python3 -m quasar`
+and the Python-only container do not require Node.js at runtime. After UI changes:
+
+```sh
+npm ci --ignore-scripts
+npm run check
+npm test
+npm run build
+```
+
+Commit updated shell assets with their source. CI rebuilds and checks for stale
+assets. Restart an already running Python server after this upgrade to load the
+new static asset routes, then refresh the page.
+
+`components.json` configures the authenticated `@shadcnblocks` registry. To add
+blocks, set `SHADCNBLOCKS_API_KEY` in the ignored `.env` and use the shadcn CLI:
+
+```sh
+npx shadcn@latest add @shadcnblocks/application-shell2
+```
+
+The registry key is development-only and never enters the frontend bundle or
+`/api/config`. The original block's example account, branding, and placeholder
+navigation have been replaced with Quasar's exercise workspace. The Python
+runtime, scoring, and cloud-query behavior remain unchanged.
+
 ## What works today
 
 - Six **fictional** Miami-Dade exercise sites, including one with missing terrain data.
