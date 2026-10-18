@@ -11,6 +11,7 @@ def float32(value):
 
 
 def validate(model):
+    global _ENSEMBLE_CACHE
     if (not isinstance(model, dict) or model.get("schema_version") != 1
             or model.get("county_fips") != "12091" or model.get("features") != FEATURES
             or model.get("objective") != "reg:squarederror" or model.get("target") != TARGET
@@ -55,6 +56,8 @@ def validate(model):
             walk(0)
             if len(seen) != len(tree):
                 raise ValueError("Unreachable nodes")
+    # Revalidation is required after editing trees; discard any compiled snapshot.
+    _ENSEMBLE_CACHE = None
     return model
 
 
@@ -81,10 +84,10 @@ def _compile_ensemble(model):
     """One straight-line function. Float literals round-trip, and bias stays outside so edits still apply."""
     members = model["members"]
     count = len(members)
-    lines = ["def ensemble(v0, v1, v2, v3, v4, v5):", "    c0 = c1 = c2 = c3 = c4 = c5 = 0.0"]
+    lines = ["def ensemble(v0, v1, v2, v3, v4, v5, biases):", "    c0 = c1 = c2 = c3 = c4 = c5 = 0.0"]
     for index, member in enumerate(members):
         raw_name = f"r{index}"
-        lines.append(f"    {raw_name} = 0.0")
+        lines.append(f"    {raw_name} = biases[{index}]")
         for tree in member["trees"]:
             _emit_tree(tree, 0, lines, raw_name, "    ", count)
     returns = ", ".join(f"r{index}" for index in range(count))
@@ -94,16 +97,16 @@ def _compile_ensemble(model):
     return namespace["ensemble"], count
 
 
-_ENSEMBLE_CACHE = {}
+_ENSEMBLE_CACHE = None
 
 
 def _ensemble(model):
-    anchor = model["members"][0]["trees"]
-    key = id(anchor)
-    cached = _ENSEMBLE_CACHE.get(key)
-    if cached is None or cached[0] is not anchor:
-        cached = (anchor, _compile_ensemble(model))
-        _ENSEMBLE_CACHE[key] = cached
+    global _ENSEMBLE_CACHE
+    # Retain only the last complete model, never an unbounded set of tree anchors.
+    cached = _ENSEMBLE_CACHE
+    if cached is None or cached[0] is not model:
+        cached = (model, _compile_ensemble(model))
+        _ENSEMBLE_CACHE = cached
     return cached[1]
 
 
@@ -154,12 +157,12 @@ def predict_compiled(model, values):
     if rejected:
         return rejected
     ensemble, count = _ensemble(model)
-    raws, c0, c1, c2, c3, c4, c5 = ensemble(values[0], values[1], values[2], values[3], values[4], values[5])
+    biases = [member["bias"] for member in model["members"]]
+    raws, c0, c1, c2, c3, c4, c5 = ensemble(*values, biases)
     predictions, raw_predictions = [], []
     baseline = 0.
-    for member, tree_raw in zip(model["members"], raws):
+    for member, raw in zip(model["members"], raws):
         bias = member["bias"]
-        raw = bias + tree_raw
         baseline += bias / count
         for tree in member["trees"]:
             baseline += tree[0]["expected"] / count

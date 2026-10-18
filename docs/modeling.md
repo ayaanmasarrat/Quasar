@@ -8,7 +8,8 @@ LinuxONE inputs and passed the unchanged promotion gates. The subsequent
 [LinuxONE activation](real-data-rollout.md#exposure-activation) serves all 25
 archive positions using the host's checksum-matched staged model and evaluation.
 That activated model stays in place. The straight-line ensemble added here is a
-second scorer for the same exported trees; it does not replace the current one.
+second scorer for the same exported trees, retained as a manual fallback; it does
+not replace the current one or introduce separately trained weights.
 Ignored datasets and trained artifacts are
 not included in a repository clone. This mapping-proxy evaluation does not
 establish observed-flood accuracy or actual LinuxONE performance.
@@ -131,8 +132,12 @@ server inference imports no ML/GIS packages.
 Two scorers read those same trees. `predict` is the current tree walk and remains
 the scorer for the activated model and assessment production. `predict_compiled`
 emits one straight-line function with the same comparisons and sums. It is a
-second model path for county-scale runtime, not a replacement, and bias edits
-still apply outside the compiled trees.
+manual fallback path for county-scale runtime, and bias edits still apply on each
+call. Production continues to call `predict`; there is no automatic substitution
+for missing inputs, stale forecasts or failed provenance checks. Both scorers
+preserve unknown inputs. Revalidate a model after editing its trees before scoring
+again. The compiled cache retains only the most recently used complete model and
+is cleared by validation.
 
 ## Assessment production and benchmark
 
