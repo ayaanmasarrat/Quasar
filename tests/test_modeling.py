@@ -217,7 +217,15 @@ class AuditAndProducerTests(unittest.TestCase):
     def test_audit_checks_hash_units_inventory_and_inspection(self):
         report = dataset.audit(self.database, self.inputs, self.boundary, self.inspection)
         self.assertEqual(report["coverage"]["label_eligible"], 2)
-        parent = read_json(self.inputs/"manifest.json");parent["terrain"]["units"] = "ft"
+        parent = read_json(self.inputs/"manifest.json")
+        parent["terrain"]["units"] = "meters"
+        write_json(self.inputs/"manifest.json", parent)
+        inspection = read_json(self.inspection/"manifest.json")
+        inspection["parent_manifest_sha256"] = digest(self.inputs/"manifest.json")
+        write_json(self.inspection/"manifest.json", inspection)
+        meters = dataset.audit(self.database, self.inputs, self.boundary, self.inspection)
+        self.assertEqual(meters["units"]["manifest_terrain_units"], "meters")
+        parent["terrain"]["units"] = "ft"
         write_json(self.inputs/"manifest.json", parent)
         with self.assertRaises(ValueError):dataset.audit(self.database, self.inputs, self.boundary)
 

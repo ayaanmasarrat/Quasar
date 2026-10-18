@@ -1,7 +1,21 @@
 # Offline parcel modeling
 
 These commands prepare, train, evaluate, export and score an experimental FEMA
-mapping proxy. **No real model has been trained or promoted by adding this code.**
+mapping proxy. Quasar learns patterns in FEMA mapped hazard areas from parcel
+terrain and mapped stream proximity, then combines that estimate with six-hour
+forecast rainfall to prioritize closer inspection. The resulting exposure index
+is experimental. Prediction of actual flooding requires verified storm
+observations and independent evaluation. The method omits storm surge, drainage
+capacity, floor elevation, and observed water levels. Official NWS and local
+guidance remain the authority for emergency decisions. Notification features
+remain simulations.
+
+Authoritative terrain manifests record elevation units as `meters` (NAVD88).
+Parcel records use `m`. Area is square meters and mapped-stream distance is
+meters before `log1p`. Audit accepts either manifest spelling and rejects other units.
+
+**Training and promotion are run results, not a property of this source file.**
+Check `evaluation.json` before describing a model as promoted.
 Ignored county datasets are absent from this workspace. Synthetic tests do not
 establish flood accuracy, county coverage, visual acceptance or LinuxONE execution.
 County scope is Okaloosa, FIPS `12091`.
