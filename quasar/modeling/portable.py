@@ -59,9 +59,7 @@ def validate(model):
 
 
 def load(path):
-    model = validate(read_json(path, 32 * 1024 * 1024))
-    _trees(model)
-    return model
+    return validate(read_json(path, 32 * 1024 * 1024))
 
 
 def _emit_tree(tree, index, lines, raw_name, indent, count):
@@ -84,15 +82,13 @@ def _compile_ensemble(model):
     members = model["members"]
     count = len(members)
     lines = ["def ensemble(v0, v1, v2, v3, v4, v5):", "    c0 = c1 = c2 = c3 = c4 = c5 = 0.0"]
-    roots = 0.
     for index, member in enumerate(members):
         raw_name = f"r{index}"
         lines.append(f"    {raw_name} = 0.0")
         for tree in member["trees"]:
-            roots += tree[0]["expected"] / count
             _emit_tree(tree, 0, lines, raw_name, "    ", count)
     returns = ", ".join(f"r{index}" for index in range(count))
-    lines.append(f"    return (({returns}), c0, c1, c2, c3, c4, c5, {roots!r})")
+    lines.append(f"    return (({returns}), c0, c1, c2, c3, c4, c5)")
     namespace = {}
     exec("\n".join(lines), {"__builtins__": {}}, namespace)
     return namespace["ensemble"], count
@@ -111,33 +107,65 @@ def _ensemble(model):
     return cached[1]
 
 
-def _trees(model):
-    _ensemble(model)
-    return model
-
-
-def predict(model, values):
+def _prepare(model, values):
     if (not isinstance(values, list) or len(values) != len(FEATURES)
             or not all(finite(x) for x in values)):
-        return {"susceptibility": None, "missing": ["model_features"]}
+        return {"susceptibility": None, "missing": ["model_features"]}, None
     if any(not low <= x <= high for x, (low, high) in zip(values, model["feature_ranges"])):
-        return {"susceptibility": None, "missing": ["outside_training_ranges"]}
-    values = [float32(x) for x in values]
-    ensemble, count = _ensemble(model)
-    raws, c0, c1, c2, c3, c4, c5, roots = ensemble(values[0], values[1], values[2], values[3], values[4], values[5])
-    members = model["members"]
-    predictions, raw_predictions = [], []
-    baseline = roots
-    for member, tree_raw in zip(members, raws):
-        bias = member["bias"]
-        raw = bias + tree_raw
-        baseline += bias / count
-        raw_predictions.append(raw)
-        predictions.append(max(0., min(1., raw)))
+        return {"susceptibility": None, "missing": ["outside_training_ranges"]}, None
+    return None, [float32(x) for x in values]
+
+
+def _result(predictions, raw_predictions, baseline, attributions):
+    count = len(predictions)
     mean = sum(predictions) / count
     return {"susceptibility": mean, "raw_susceptibility": sum(raw_predictions) / count,
             "model_instability": math.sqrt(sum((x-mean)**2 for x in predictions) / count),
-            "baseline": baseline, "attributions": dict(zip(FEATURES, (c0, c1, c2, c3, c4, c5))), "missing": []}
+            "baseline": baseline, "attributions": dict(zip(FEATURES, attributions)), "missing": []}
+
+
+def predict(model, values):
+    """Current tree walk. Assessment production and the activated model use this scorer."""
+    rejected, values = _prepare(model, values)
+    if rejected:
+        return rejected
+    predictions, raw_predictions = [], []
+    baseline, contributions = 0., [0.] * len(FEATURES)
+    for member in model["members"]:
+        raw = member["bias"]
+        baseline += member["bias"] / len(model["members"])
+        for tree in member["trees"]:
+            node = tree[0]
+            baseline += node["expected"] / len(model["members"])
+            while "leaf" not in node:
+                feature = node["feature"]
+                child = tree[node["left"] if values[feature] < node["threshold"] else node["right"]]
+                contributions[feature] += (child["expected"] - node["expected"]) / len(model["members"])
+                node = child
+            raw += node["leaf"]
+        raw_predictions.append(raw)
+        predictions.append(max(0., min(1., raw)))
+    return _result(predictions, raw_predictions, baseline, contributions)
+
+
+def predict_compiled(model, values):
+    """Straight-line ensemble for the same trees. Does not replace predict."""
+    rejected, values = _prepare(model, values)
+    if rejected:
+        return rejected
+    ensemble, count = _ensemble(model)
+    raws, c0, c1, c2, c3, c4, c5 = ensemble(values[0], values[1], values[2], values[3], values[4], values[5])
+    predictions, raw_predictions = [], []
+    baseline = 0.
+    for member, tree_raw in zip(model["members"], raws):
+        bias = member["bias"]
+        raw = bias + tree_raw
+        baseline += bias / count
+        for tree in member["trees"]:
+            baseline += tree[0]["expected"] / count
+        raw_predictions.append(raw)
+        predictions.append(max(0., min(1., raw)))
+    return _result(predictions, raw_predictions, baseline, (c0, c1, c2, c3, c4, c5))
 
 
 def export_saved(saved, metadata):

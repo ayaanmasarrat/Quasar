@@ -79,6 +79,16 @@ class FeatureAndRuntimeTests(unittest.TestCase):
         self.assertLessEqual(result["susceptibility"], 1)
         self.assertGreater(result["raw_susceptibility"], result["susceptibility"])
 
+    def test_compiled_ensemble_matches_current_tree_walk(self):
+        model = portable.validate(model_fixture())
+        samples = ([1]*6, [2]*6, [0, 1, 2, 3, 4, 5])
+        for values in samples:
+            self.assertEqual(portable.predict(model, values), portable.predict_compiled(model, values))
+        model["members"][0]["bias"] = 5
+        edited = portable.predict(model, [1]*6)
+        self.assertEqual(edited, portable.predict_compiled(model, [1]*6))
+        self.assertGreater(edited["raw_susceptibility"], edited["susceptibility"])
+
     def test_portable_rejects_topology_objectives_categories_and_feature_mismatch(self):
         changes = [lambda m: m.update(objective="binary:logistic"), lambda m: m["features"].reverse(),
                    lambda m: m["members"][0]["trees"][0][0].update(left=0),
@@ -228,6 +238,23 @@ class AuditAndProducerTests(unittest.TestCase):
         parent["terrain"]["units"] = "ft"
         write_json(self.inputs/"manifest.json", parent)
         with self.assertRaises(ValueError):dataset.audit(self.database, self.inputs, self.boundary)
+
+    def test_audit_accepts_preparer_meter_units_without_changing_provenance(self):
+        parent = read_json(self.inputs/"manifest.json")
+        # prepare_parcel_inputs preserves the USGS XML spelling in its manifest;
+        # individual terrain records use the normalized unit "m".
+        parent["terrain"]["units"] = "meters"
+        write_json(self.inputs/"manifest.json", parent)
+        original_hash = digest(self.inputs/"manifest.json")
+        report = dataset.audit(self.database, self.inputs, self.boundary)
+        self.assertEqual(report["coverage"]["label_eligible"], 2)
+        self.assertEqual(report["provenance"]["terrain"]["units"], "meters")
+        self.assertEqual(digest(self.inputs/"manifest.json"), original_hash)
+        for units in ("feet", "unknown", "", None):
+            parent["terrain"]["units"] = units
+            write_json(self.inputs/"manifest.json", parent)
+            with self.subTest(units=units), self.assertRaises(ValueError):
+                dataset.audit(self.database, self.inputs, self.boundary)
 
     # Value: protects=missing forecast initialization cannot publish assessments; fails_when=an unusable artifact is published; why_new=weather tests have an eligible initialization; seam=none; no_claim=live forecast availability.
     def test_no_eligible_initialization_never_publishes_an_artifact(self):

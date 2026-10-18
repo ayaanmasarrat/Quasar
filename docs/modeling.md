@@ -1,7 +1,19 @@
 # Offline parcel modeling
 
 These commands prepare, train, evaluate, export and score an experimental FEMA
-mapping proxy. Quasar learns patterns in FEMA mapped hazard areas from parcel
+mapping proxy. PR #17 supplied the pipeline without trained weights. The
+[first real-data run](modeling-run-v1.md), completed October 18, 2026 UTC
+(October 17 Central), trained and exported a model locally from verified
+LinuxONE inputs and passed the unchanged promotion gates. The subsequent
+[LinuxONE activation](real-data-rollout.md#exposure-activation) serves all 25
+archive positions using the host's checksum-matched staged model and evaluation.
+That activated model stays in place. The straight-line ensemble added here is a
+second scorer for the same exported trees; it does not replace the current one.
+Ignored datasets and trained artifacts are
+not included in a repository clone. This mapping-proxy evaluation does not
+establish observed-flood accuracy or actual LinuxONE performance.
+
+Quasar learns patterns in FEMA mapped hazard areas from parcel
 terrain and mapped stream proximity, then combines that estimate with six-hour
 forecast rainfall to prioritize closer inspection. The resulting exposure index
 is experimental. Prediction of actual flooding requires verified storm
@@ -34,7 +46,8 @@ excluded. Terrain requires complete polygon statistics; separate point samples
 never fill gaps. Mapped-stream distance retains incomplete coastal/lake/canal
 coverage warnings and does not establish hydraulic connectivity.
 
-Preparation verifies manifests, database/input hashes, inventory identity, units,
+Preparation verifies manifests, database/input hashes, inventory identity, units
+(the manifest accepts `m` or the preparer's USGS spelling `meters`),
 datum and actual polygon containment in the authoritative county geometry. It
 assigns representative points to fixed 10 km EPSG:26916 squares, ordered by SHA256
 of `42:<block>`, with cumulative 70/85% boundaries for development/validation/test.
@@ -114,6 +127,12 @@ values and thresholds use XGBoost float32 comparison semantics. Signed tree-path
 changes plus the baseline sum to raw susceptibility; clipping/ensemble averaging
 are separate. Attributions are not SHAP values or physical causes. Standard-library
 server inference imports no ML/GIS packages.
+
+Two scorers read those same trees. `predict` is the current tree walk and remains
+the scorer for the activated model and assessment production. `predict_compiled`
+emits one straight-line function with the same comparisons and sums. It is a
+second model path for county-scale runtime, not a replacement, and bias edits
+still apply outside the compiled trees.
 
 ## Assessment production and benchmark
 

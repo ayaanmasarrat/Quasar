@@ -27,15 +27,20 @@ snapshots, or use the authenticated LinuxONE snapshot bridge. Set
 host for prepared parcel inputs. Missing settings never load synthetic data.
 
 The Python runtime is dependency-free. Optional GIS preparation stays separate.
-Use `npm run dev:wifi` for temporary password-protected Wi-Fi sharing; see
+The hosted app is public without a sign-in screen. `npm run dev:wifi` remains
+a separate optional password-protected laptop-sharing utility; see
 [hosted access](docs/vercel.md) and [real-data activation](docs/real-data-rollout.md).
 Do not start a deployment or restart shared services without authorization.
 
 ## County sources
 
 The map, Data tab and Reports use imported native county forecast cells only.
-The map opens with current rainfall; Tools also offers the retained October 9
-archive. Archive rainfall is a forecast reconstruction, not an observation.
+The map opens directly on the Isaias October 9 archive, with 25 hourly
+positions, county-clipped H3 rainfall and an interactive maximum-native-cell rainfall trend.
+Each hex uses the maximum of its overlapping native forecasts; this does not
+increase forecast resolution. Missing overlaps leave the hex transparent.
+Map, Data and Reports share the selected hour. The current forecast is absent
+from the application controls. Archive rainfall is a forecast reconstruction, not an observation.
 Source initialization, retrieval, validity, resolution and mm / 6h remain visible.
 Missing, stale or invalid imports remain unavailable. No serving request starts
 cloud queries. Old site-only imports are rejected by these views.
@@ -48,7 +53,11 @@ parcels have a distinct outline. H3 does not sharpen native rainfall forecasts.
 
 Real parcel scores remain unknown unless separately produced matching exposure
 assessments exist. Optional offline modeling implements an experimental FEMA
-mapping proxy and rainfall interaction; no validated flood model is established.
+mapping proxy and rainfall interaction. A real-data model has now been trained
+locally and passed the pipeline's mapping-proxy promotion gates; see the
+[training report](docs/modeling-run-v1.md). LinuxONE now serves matching assessments
+for all 25 archive positions; see [activation](docs/real-data-rollout.md#exposure-activation).
+No observed-flood validation is established.
 Exposure colors are not flood probability or depth, and green does not establish safety.
 
 Fictional sites, synthetic scenarios, what-if additions, notification previews and
@@ -78,5 +87,8 @@ remain optional, explicit research tools; see the documentation index.
 The optional [modeling pipeline](docs/modeling.md) prepares spatially split datasets,
 evaluates a FEMA mapping proxy, exports portable trees and produces experimental
 rainfall/exposure assessments, with a separate gated observed-outcome experiment.
-No real trained model or LinuxONE benchmark is established by adding this code;
-absent datasets and failed promotion gates remain explicit.
+The [first real-data run](docs/modeling-run-v1.md) produced a trained portable
+model and a local archived-rainfall assessment. Training artifacts stay under
+ignored `data/processed/`; cloning this repo does not include them. The
+[LinuxONE activation](docs/real-data-rollout.md#exposure-activation) records the
+separately verified serving artifact and host benchmarks.

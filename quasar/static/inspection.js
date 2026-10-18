@@ -7,6 +7,15 @@
   const number=value=>typeof value==="number" && Number.isFinite(value);
   const value=(n,unit="")=>number(n)?`${n.toFixed(2)}${unit}`:"Unknown";
   const percent=n=>number(n)?`${(n*100).toFixed(2)}%`:"Unknown";
+  function rainfallSummary(context,current) {
+    const overlaps=context?.forecast_overlaps || [], features=current?.weather_cells?.features || [];
+    const matched=overlaps.map(overlap=>features.find(f=>f.id===overlap.native_cell_id && JSON.stringify(f.geometry)===JSON.stringify(overlap.geometry)));
+    const values=matched.filter(f=>f?.properties.status==="ready" && number(f.properties.rainfall_6h_mm) && f.properties.rainfall_6h_mm>=0).map(f=>f.properties.rainfall_6h_mm);
+    if(!values.length) return {value:"Unavailable",detail:overlaps.length ? "Rainfall is unavailable for the selected archive hour." : "Prepared native-cell overlaps are unavailable for this selection."};
+    const low=Math.min(...values),high=Math.max(...values);
+    return {value:low===high ? low.toFixed(1) : `${low.toFixed(1)}–${high.toFixed(1)}`,
+      detail:`${values.length}/${overlaps.length} overlapping native cells available${values.length<overlaps.length || context?.forecast_coverage_complete===false ? " · Partial coverage; hex remains transparent" : ""}. Forecast rainfall at the source grid resolution, not parcel flood depth.`};
+  }
   function forecastRows(context,current) {
     if(current?.mode==="synthetic_demo") return [["Forecast rainfall","Exercise rainfall is not applied to real parcels."]];
     const overlaps=context?.forecast_overlaps || [], cells=current?.weather_cells;
@@ -16,7 +25,7 @@
       const feature=native.get(overlap.native_cell_id), p=feature?.properties;
       const match=feature && JSON.stringify(feature.geometry)===JSON.stringify(overlap.geometry);
       const ready=match && p.status==="ready" && number(p.rainfall_6h_mm) && p.rainfall_6h_mm>=0;
-      return [`Native rainfall ${index+1} · ${percent(overlap.area_fraction)} overlap`,
+      return [`Native rainfall ${index+1}${number(overlap.area_fraction) ? ` · ${percent(overlap.area_fraction)} overlap` : ""}`,
         ready?`${p.rainfall_6h_mm.toFixed(1)} mm / 6h`:`Unavailable · ${match?p.status:"native geometry not matched"}`];
     });
     const initializations=[...new Set(overlaps.map(o=>native.get(o.native_cell_id)?.properties.init_time).filter(Boolean))];
@@ -51,5 +60,5 @@
     const p=context.provenance || {}, terrain=p.terrain || {}, fema=p.fema || {};
     return `Prepared ${context.prepared_at || "Unknown"}. Terrain: ${terrain.source_dates?.join?.(", ") || terrain.source_date_range || "see source metadata"}; ${terrain.vertical_datum || "NAVD88"}, meters. FEMA panel dates: ${(fema.panel_effective_dates || []).join(", ") || "Unknown"}; package publication: ${(fema.package_publication_dates || []).join(", ") || "Unknown"}. ${fema.later_revision_completeness || "Later map revisions unverified"}. Lakes, canals and coastal water coverage are incomplete. No parcel score is calculated.`;
   }
-  return {forecastRows,parcelRows,provenance};
+  return {forecastRows,parcelRows,provenance,rainfallSummary};
 });
