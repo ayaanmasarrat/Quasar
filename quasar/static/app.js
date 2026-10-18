@@ -277,7 +277,7 @@ function updateCountyGrid() {
   map.getSource("hotspots").setData(grid);
   const rain = $("map-layer").value === "rainfall";
   map.setPaintProperty("hotspot-fill", "fill-color", rain ? QuasarSpatial.rainfallExpression() : mapColors("exposure_score"));
-  map.setPaintProperty("hotspot-fill", "fill-opacity", rain ? ["case",["==",["get","rainfall_mm"],null],0,0.76] : ["case",["==",["get","exposure_score"],null],0,0.28]);
+  map.setPaintProperty("hotspot-fill", "fill-opacity", rain ? ["case",["==",["get","rainfall_mm"],null],0,0.5] : ["case",["==",["get","exposure_score"],null],0,0.28]);
   for (const layer of ["parcel-fill", "selected-parcel-fill"]) map.setPaintProperty(layer,"fill-opacity",rain ? 0 : ["case",["==",["get","exposure_score"],null],0,0.45]);
   $("grid-resolution").textContent = `H3 · RES ${resolution}`;
   if (county) $("grid-status").textContent = `${grid.features.length.toLocaleString()} cells · R${resolution} · click to inspect`;
@@ -473,6 +473,13 @@ async function inspectCell(cell,resolution=7) {
 }
 
 function publishParcels(entry,force=false) {
+  const inventoryChanged=parcelEntry && parcelEntry.inventory_id!==entry.inventory_id;
+  if(inventoryChanged) {
+    ++contextRequest;
+    parcelContext=cellContext=null;
+    contextLoading=false;
+    contextMessage="Parcel inventory changed; reloading reference inputs…";
+  }
   if(cellContext && cellContext.inventory_id!==entry.inventory_id) {
     cellContext=null; contextMessage="Reference inputs do not match the cached parcel inventory; current coverage is unknown.";
   }
@@ -481,6 +488,12 @@ function publishParcels(entry,force=false) {
     exposureData?.status === "ready" && exposureData.inventory_id === entry.inventory_id ? parcelAssessments.get(feature.id) : null))};
   const selected=parcelData.features.find(feature=>feature.id===selectedParcel);
   if(selected) map.getSource("selected-parcel").setData({type:"FeatureCollection",features:[selected]});
+  // Do not join a shape retained from the old inventory to replacement inputs.
+  if(inventoryChanged && selectedParcel!==null && !selected) {
+    selectedParcel=null;
+    map.getSource("selected-parcel").setData(emptyCollection());
+    renderCellPanel();
+  }
   if(selectedParcel!==null) renderExposureInspection();
   void hydrateParcelExposure();
   if(force || Date.now()-lastParcelPaint>=100) {
@@ -498,6 +511,7 @@ function publishParcels(entry,force=false) {
     ? `${entry.features.length.toLocaleString()} county-validated parcels shown. All ${entry.source_total.toLocaleString()} source matches checked.${entry.excluded_count ? ` ${entry.excluded_count} excluded by county validation.` : ""}`
     : `Partial inventory: ${entry.features.length.toLocaleString()} parcels shown · ${entry.checked_count || 0} / ${entry.source_total ?? "unknown"} source matches checked…`;
   $("parcel-provenance").textContent=`${entry.source_url} · source snapshot ${entry.retrieved_at} · ${entry.crs}. ${entry.processing || "County-validated geometry"}. Cached ${new Date(entry.savedAt || Date.now()).toISOString()}.`;
+  if(inventoryChanged) void loadInspection(selectedParcel===null ? "cell" : "parcel",selectedParcel ?? selectedCell,true);
 }
 
 async function loadParcels(force=false) {
